@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [username, setUsername] = useState('');
-  const [email, setEmail] = useState(''); // New Email state hook
+  const [email, setEmail] = useState(''); 
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
