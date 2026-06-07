@@ -1,18 +1,47 @@
 "use client";
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+// 1. Import our fresh 3D tools
+import { Canvas, useFrame } from '@react-three/fiber';
+import { OrbitControls } from '@react-three/drei';
 
+// 🟢 SUB-COMPONENT: A Spinning 3D Cube Mesh
+function SpinningCube() {
+  const meshRef = useRef();
+  const [hovered, setHovered] = useState(false);
+  const [active, setActive] = useState(false);
+
+  // useFrame runs on every single animation frame loop (around 60-120fps)
+  useFrame((state, delta) => {
+    meshRef.current.rotation.x += delta * 0.5;
+    meshRef.current.rotation.y += delta * 0.5;
+  });
+
+  return (
+    <mesh
+      ref={meshRef}
+      scale={active ? 1.5 : 1}
+      onClick={() => setActive(!active)}
+      onPointerOver={() => setHovered(true)}
+      onPointerOut={() => setHovered(false)}
+    >
+      {/* Defines shape dimensions: [width, height, depth] */}
+      <boxGeometry args={[2, 2, 2]} />
+      {/* Defines surface look: changes color to bright crimson when mouse hovers */}
+      <meshStandardMaterial color={hovered ? '#ef4444' : '#b91c1c'} roughness={0.3} />
+    </mesh>
+  );
+}
+
+// 🟢 MAIN COMPONENT
 export default function DashboardPage() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  // Protect the route: Ensure user is authenticated before showing content
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
-    
     if (!storedUser) {
-      // No session found? Boot them back to the login page immediately
       router.push('/');
     } else {
       setUser(JSON.parse(storedUser));
@@ -35,7 +64,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans flex flex-col">
-      {/* 🟢 TOP NAVIGATION BAR */}
+      {/* HEADERBAR */}
       <header className="w-full border-b border-zinc-800 bg-zinc-900/50 backdrop-blur px-6 py-4 flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <div className="h-3 w-3 rounded-full bg-red-500 animate-pulse" />
@@ -57,47 +86,52 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      {/* 🟢 MAIN GRID CONTAINER */}
+      {/* METRICS SIDEBAR & VIEWPORT GRID */}
       <main className="flex-1 p-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
         
-        {/* SIDE PANELS FOR METRICS / CONTROLS */}
         <section className="lg:col-span-1 space-y-6">
           <div className="bg-zinc-900/60 border border-zinc-800 rounded-xl p-5 shadow-sm">
             <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-3">System Status</h3>
             <div className="space-y-2 text-xs">
               <p className="flex justify-between"><span className="text-zinc-500">Core Engine:</span> <span className="text-green-400 font-mono">ONLINE</span></p>
-              <p className="flex justify-between"><span className="text-zinc-500">Render Driver:</span> <span className="text-yellow-500 font-mono">AWAITING CANVAS</span></p>
+              {/* Status turned to ACTIVE! */}
+              <p className="flex justify-between"><span className="text-zinc-500">Render Driver:</span> <span className="text-green-400 font-mono font-bold animate-pulse">ACTIVE (WEBGL2)</span></p>
               <p className="flex justify-between"><span className="text-zinc-500">DB Pipeline:</span> <span className="text-green-400 font-mono">CONNECTED</span></p>
             </div>
           </div>
 
           <div className="bg-zinc-900/60 border border-zinc-800 rounded-xl p-5 shadow-sm">
             <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-2">3D Scene Settings</h3>
-            <p className="text-xs text-zinc-500 mb-4">Controls will activate once the Three.js runtime mounts inside the viewport grid.</p>
-            <button disabled className="w-full py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-xs font-medium text-zinc-500 cursor-not-allowed">
-              Initialize Environment
-            </button>
+            <p className="text-xs text-zinc-400 mb-2">💡 Interactive Hotkeys Connected:</p>
+            <ul className="text-[11px] text-zinc-500 list-disc list-inside space-y-1">
+              <li>Left-Click + Drag to Rotate Space</li>
+              <li>Scroll Wheel to Zoom In/Out</li>
+              <li>Click Object to Toggle Scale size</li>
+            </ul>
           </div>
         </section>
 
-        {/* 🚀 CENTRAL VIEWPORT: WHERE YOUR 3D WORLD WILL LIVE */}
-        <section className="lg:col-span-3 bg-zinc-900 border border-zinc-800 rounded-xl flex flex-col overflow-hidden shadow-2xl min-h-[500px]">
-          <div className="bg-zinc-950/80 px-4 py-2 border-b border-zinc-800 flex items-center justify-between text-xs text-zinc-400">
-            <span className="font-mono">viewport_canvas_01.gl</span>
-            <span className="text-zinc-600">WebGL2</span>
+        {/* 🚀 CENTRAL VIEWPORT CONTAINER */}
+        <section className="lg:col-span-3 bg-zinc-950 border border-zinc-800 rounded-xl flex flex-col overflow-hidden shadow-2xl min-h-[550px]">
+          <div className="bg-zinc-900/80 px-4 py-2 border-b border-zinc-800 flex items-center justify-between text-xs text-zinc-400">
+            <span className="font-mono text-red-400">viewport_canvas_01.gl</span>
+            <span className="text-zinc-500">THREE.JS RUNTIME RUNNING</span>
           </div>
           
-          <div className="flex-1 flex flex-col items-center justify-center p-8 bg-gradient-to-b from-zinc-900 via-zinc-900 to-zinc-950 text-center pattern-grid">
-            <div className="p-4 rounded-full bg-red-950/30 border border-red-900/40 text-red-500 mb-4">
-              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 10a1 1 0 011-1V9a1 1 0 112 0v1a1 1 0 011 1v2a1 1 0 01-1 1h-2a1 1 0 01-1-1v-2z" />
-              </svg>
-            </div>
-            <h2 className="text-lg font-semibold text-zinc-200">Ready for 3D Application Content</h2>
-            <p className="text-xs text-zinc-500 max-w-sm mt-1">
-              Your secure user session is verified. This central dark viewport container is styled and dimensioned to handle your upcoming React Three Fiber Canvas setup.
-            </p>
+          {/* This relative div encapsulates our live WebGL context viewport */}
+          <div className="flex-1 relative w-full h-full bg-zinc-950">
+            <Canvas camera={{ position: [0, 0, 5.5] }}>
+              {/* Studio lighting environment components */}
+              <ambientLight intensity={0.7} />
+              <pointLight position={[10, 10, 10]} intensity={1.5} />
+              <directionalLight position={[-5, 5, 5]} intensity={1} />
+              
+              {/* Renders our custom cube component */}
+              <SpinningCube />
+              
+              {/* Enables mouse drag orbit controls context */}
+              <OrbitControls enableZoom={true} maxDistance={10} minDistance={3} />
+            </Canvas>
           </div>
         </section>
 
