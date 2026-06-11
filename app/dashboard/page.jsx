@@ -40,6 +40,7 @@ export default function DashboardPage() {
       type: lightType,
       position: [(Math.random() - 0.5) * 4, 3, (Math.random() - 0.5) * 4], 
       intensity: lightType === 'ambient' ? 0.5 : 1.5,
+      color: '#ffffff',
       selected: false
     };
     setSceneItems((prev) => [...prev, newLight]);
@@ -264,79 +265,127 @@ export default function DashboardPage() {
           {/* VIEWPORT CONTENT HOUSING */}
           <div className="flex-1 relative w-full h-full bg-zinc-950">
             
-            {/* 🎛️ FLOATING INSPECTOR PANEL (Matches the requested configuration style) */}
-            {activeItem && activeItem.category === 'object' && (
+            {/* FLOATING INSPECTOR PANEL */}
+            {activeItem && (
               <div className="absolute top-4 right-4 z-20 w-60 bg-zinc-900/95 border border-zinc-800 shadow-2xl rounded-lg overflow-hidden backdrop-blur font-mono text-[11px]">
                 <div className="bg-zinc-800 px-3 py-1.5 border-b border-zinc-700 font-semibold text-zinc-300 flex justify-between items-center">
-                  <span>OBJECT INSPECTOR</span>
+                  <span>{activeItem.category === 'object' ? 'OBJECT INSPECTOR' : 'LIGHT INSPECTOR'}</span>
                   <span className="text-[9px] bg-zinc-900 text-red-400 px-1.5 py-0.5 rounded capitalize">{activeItem.type}</span>
                 </div>
                 
                 <div className="p-3 space-y-3">
-                  {/* COLOR SATCH */}
-                  <div className="flex items-center justify-between">
-                    <span className="text-zinc-400">objectColor</span>
-                    <div className="flex items-center space-x-1.5">
-                      <span className="text-zinc-500 font-bold uppercase">{activeItem.color}</span>
-                      <div className="w-3 h-3 rounded-sm border border-zinc-700" style={{ backgroundColor: activeItem.color }} />
-                    </div>
-                  </div>
+                  
+                  {/* 📦 GEOMETRIC SHAPE CONTROLS */}
+                  {activeItem.category === 'object' && (
+                    <>
+                      <div className="flex items-center justify-between">
+                        <span className="text-zinc-400">objectColor</span>
+                        <div className="flex items-center space-x-1.5">
+                          <span className="text-zinc-500 font-bold uppercase">{activeItem.color}</span>
+                          <div className="w-3 h-3 rounded-sm border border-zinc-700" style={{ backgroundColor: activeItem.color }} />
+                        </div>
+                      </div>
 
-                  <hr className="border-zinc-800" />
+                      <hr className="border-zinc-800" />
 
-                  {/* SCALE X SLIDER */}
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-zinc-400">
-                      <span>scaleX</span>
-                      <span className="text-red-400">{(activeItem.scale?.[0] ?? 1).toFixed(2)}</span>
-                    </div>
-                    <input 
-                      type="range" min="0.2" max="4" step="0.05"
-                      value={activeItem.scale?.[0] ?? 1}
-                      onChange={(e) => {
-                        const val = parseFloat(e.target.value);
-                        setSceneItems(prev => prev.map(i => i.id === activeItem.id ? { ...i, scale: [val, i.scale?.[1] ?? 1, i.scale?.[2] ?? 1] } : i));
-                        setActiveItem(prev => prev ? { ...prev, scale: [val, prev.scale?.[1] ?? 1, prev.scale?.[2] ?? 1] } : null);
-                      }}
-                      className="w-full h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-red-500"
-                    />
-                  </div>
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-zinc-400">
+                          <span>scaleX</span>
+                          <span className="text-red-400">{(activeItem.scale?.[0] ?? 1).toFixed(2)}</span>
+                        </div>
+                        <input 
+                          type="range" min="0.2" max="4" step="0.05"
+                          value={activeItem.scale?.[0] ?? 1}
+                          onChange={(e) => {
+                            const val = parseFloat(e.target.value);
+                            setSceneItems(prev => prev.map(i => i.id === activeItem.id ? { ...i, scale: [val, i.scale?.[1] ?? 1, i.scale?.[2] ?? 1] } : i));
+                            setActiveItem(prev => prev ? { ...prev, scale: [val, prev.scale?.[1] ?? 1, prev.scale?.[2] ?? 1] } : null);
+                          }}
+                          className="w-full h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-red-500"
+                        />
+                      </div>
 
-                  {/* SCALE Y SLIDER */}
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-zinc-400">
-                      <span>scaleY</span>
-                      <span className="text-red-400">{(activeItem.scale?.[1] ?? 1).toFixed(2)}</span>
-                    </div>
-                    <input 
-                      type="range" min="0.2" max="4" step="0.05"
-                      value={activeItem.scale?.[1] ?? 1}
-                      onChange={(e) => {
-                        const val = parseFloat(e.target.value);
-                        setSceneItems(prev => prev.map(i => i.id === activeItem.id ? { ...i, scale: [i.scale?.[0] ?? 1, val, i.scale?.[2] ?? 1] } : i));
-                        setActiveItem(prev => prev ? { ...prev, scale: [prev.scale?.[0] ?? 1, val, prev.scale?.[2] ?? 1] } : null);
-                      }}
-                      className="w-full h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-red-500"
-                    />
-                  </div>
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-zinc-400">
+                          <span>scaleY</span>
+                          <span className="text-red-400">{(activeItem.scale?.[1] ?? 1).toFixed(2)}</span>
+                        </div>
+                        <input 
+                          type="range" min="0.2" max="4" step="0.05"
+                          value={activeItem.scale?.[1] ?? 1}
+                          onChange={(e) => {
+                            const val = parseFloat(e.target.value);
+                            setSceneItems(prev => prev.map(i => i.id === activeItem.id ? { ...i, scale: [i.scale?.[0] ?? 1, val, i.scale?.[2] ?? 1] } : i));
+                            setActiveItem(prev => prev ? { ...prev, scale: [prev.scale?.[0] ?? 1, val, prev.scale?.[2] ?? 1] } : null);
+                          }}
+                          className="w-full h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-red-500"
+                        />
+                      </div>
 
-                  {/* SCALE Z SLIDER */}
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-zinc-400">
-                      <span>scaleZ</span>
-                      <span className="text-red-400">{(activeItem.scale?.[2] ?? 1).toFixed(2)}</span>
-                    </div>
-                    <input 
-                      type="range" min="0.2" max="4" step="0.05"
-                      value={activeItem.scale?.[2] ?? 1}
-                      onChange={(e) => {
-                        const val = parseFloat(e.target.value);
-                        setSceneItems(prev => prev.map(i => i.id === activeItem.id ? { ...i, scale: [i.scale?.[0] ?? 1, i.scale?.[1] ?? 1, val] } : i));
-                        setActiveItem(prev => prev ? { ...prev, scale: [prev.scale?.[0] ?? 1, prev.scale?.[1] ?? 1, val] } : null);
-                      }}
-                      className="w-full h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-red-500"
-                    />
-                  </div>
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-zinc-400">
+                          <span>scaleZ</span>
+                          <span className="text-red-400">{(activeItem.scale?.[2] ?? 1).toFixed(2)}</span>
+                        </div>
+                        <input 
+                          type="range" min="0.2" max="4" step="0.05"
+                          value={activeItem.scale?.[2] ?? 1}
+                          onChange={(e) => {
+                            const val = parseFloat(e.target.value);
+                            setSceneItems(prev => prev.map(i => i.id === activeItem.id ? { ...i, scale: [i.scale?.[0] ?? 1, i.scale?.[1] ?? 1, val] } : i));
+                            setActiveItem(prev => prev ? { ...prev, scale: [prev.scale?.[0] ?? 1, prev.scale?.[1] ?? 1, val] } : null);
+                          }}
+                          className="w-full h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-red-500"
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  {/* 💡 AMBIENT/DIRECTIONAL LIGHT SOURCE CONTROLS */}
+                  {activeItem.category === 'light' && (
+                    <>
+                      {/* CHROMATIC EMISSION FIELD */}
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-zinc-400">
+                          <span>lightColor</span>
+                          <span className="text-orange-400 uppercase">{activeItem.color || '#ffffff'}</span>
+                        </div>
+                        <div className="flex items-center space-x-3 mt-1">
+                          <input 
+                            type="color" 
+                            value={activeItem.color || '#ffffff'}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setSceneItems(prev => prev.map(i => i.id === activeItem.id ? { ...i, color: val } : i));
+                              setActiveItem(prev => prev ? { ...prev, color: val } : null);
+                            }}
+                            className="w-8 h-6 bg-transparent border border-zinc-700 cursor-pointer rounded bg-zinc-950 p-0.5"
+                          />
+                          <span className="text-[10px] text-zinc-500">Modify emission wavelength hue</span>
+                        </div>
+                      </div>
+
+                      <hr className="border-zinc-800" />
+
+                      {/* INTENSITY POWER CONTROLLER */}
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-zinc-400">
+                          <span>intensity (Power)</span>
+                          <span className="text-orange-400">{(activeItem.intensity ?? 1).toFixed(2)} lm</span>
+                        </div>
+                        <input 
+                          type="range" min="0" max="6" step="0.1"
+                          value={activeItem.intensity ?? 1}
+                          onChange={(e) => {
+                            const val = parseFloat(e.target.value);
+                            setSceneItems(prev => prev.map(i => i.id === activeItem.id ? { ...i, intensity: val } : i));
+                            setActiveItem(prev => prev ? { ...prev, intensity: val } : null);
+                          }}
+                          className="w-full h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-orange-500"
+                        />
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 <button 
@@ -422,6 +471,53 @@ export default function DashboardPage() {
                   
                 } else {
                   // Environmental Lights Rendering Loop
+                  const isSelected = activeItem?.id === item.id;
+                  
+                  // Centralizing the light configuration template
+                  const lightContent = (
+                    <>
+                      <sphereGeometry args={[0.2, 16, 16]} />
+                      <meshBasicMaterial 
+                        color={item.selected ? "#ef4444" : (item.color || "#ffffff")} 
+                        wireframe 
+                      />
+                      {item.type === 'ambient' && (
+                        <ambientLight intensity={item.intensity} color={item.color || "#ffffff"} />
+                      )}
+                      {item.type === 'directional' && (
+                        <directionalLight 
+                          intensity={item.intensity} 
+                          color={item.color || "#ffffff"} 
+                          castShadow 
+                          position={[0, 0, 0]} // Position stays relative to its interactive mesh parent wrapper
+                        />
+                      )}
+                    </>
+                  );
+
+                  if (isSelected) {
+                    return (
+                      <TransformControls
+                        key={`transform-${item.id}`}
+                        position={item.position}
+                        mode="translate" // Lights are transformed through spatial movement handles
+                        onDraggingChanged={(e) => {
+                          if (orbitRef.current) orbitRef.current.enabled = !e.value;
+                        }}
+                        onMouseUp={(e) => {
+                          const { x, y, z } = e.target.object.position;
+                          const newPos = [x, y, z];
+                          setSceneItems(prev => prev.map(i => i.id === item.id ? { ...i, position: newPos } : i));
+                          setActiveItem(prev => prev && prev.id === item.id ? { ...prev, position: newPos } : prev);
+                        }}
+                      >
+                        <mesh onPointerDown={(e) => { e.stopPropagation(); handleItemSelect(item); }}>
+                          {lightContent}
+                        </mesh>
+                      </TransformControls>
+                    );
+                  }
+
                   return (
                     <mesh 
                       key={item.id} 
@@ -433,13 +529,7 @@ export default function DashboardPage() {
                         }
                       }}
                     >
-                      <sphereGeometry args={[0.2, 16, 16]} />
-                      <meshBasicMaterial 
-                        color={item.selected ? "#ef4444" : (item.type === 'ambient' ? "#fef08a" : "#fb923c")} 
-                        wireframe 
-                      />
-                      {item.type === 'ambient' && <ambientLight intensity={item.intensity} />}
-                      {item.type === 'directional' && <directionalLight intensity={item.intensity} castShadow />}
+                      {lightContent}
                     </mesh>
                   );
                 }
