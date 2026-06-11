@@ -3,7 +3,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import SceneSettings from './SceneSettings'; 
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, Grid } from '@react-three/drei';
+import { OrbitControls, Grid, TransformControls } from '@react-three/drei';
 
 export default function DashboardPage() {
   const [user, setUser] = useState(null);
@@ -17,6 +17,8 @@ export default function DashboardPage() {
   const [sceneItems, setSceneItems] = useState([]);
   const [activeItem, setActiveItem] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [transformMode, setTransformMode] = useState('translate');
+  const orbitRef = useRef(null);
 
   const spawnObject = (shapeType) => {
     const newObj = {
@@ -24,7 +26,7 @@ export default function DashboardPage() {
       category: 'object',
       type: shapeType,
       position: [(Math.random() - 0.5) * 4, 0.5, (Math.random() - 0.5) * 4], 
-      scale: 1,
+      scale: [1, 1, 1],
       color: '#' + Math.floor(Math.random() * 16777215).toString(16), 
       selected: false
     };
@@ -230,27 +232,183 @@ export default function DashboardPage() {
         </div>
 
         {/* CENTRAL VIEWPORT CONTAINER */}
-        <section className="lg:col-span-3 bg-zinc-950 border border-zinc-800 rounded-xl flex flex-col overflow-hidden shadow-2xl min-h-[550px]">
-          <div className="bg-zinc-900/80 px-4 py-2 border-b border-zinc-800 flex items-center justify-between text-xs text-zinc-400">
-            <span className="font-mono text-red-400">
-              {currentProfile ? `profile_${currentProfile.toLowerCase().replace(/\s+/g, '_')}.gl` : 'viewport_canvas_01.gl'}
-            </span>
+        {/* CENTRAL VIEWPORT CONTAINER */}
+        <section className="lg:col-span-3 bg-zinc-950 border border-zinc-800 rounded-xl flex flex-col overflow-hidden shadow-2xl min-h-[550px] relative">
+          
+          {/* HEADER OPTIONS BAR */}
+          <div className="bg-zinc-900/80 px-4 py-2 border-b border-zinc-800 flex items-center justify-between text-xs text-zinc-400 z-10">
+            <div className="flex items-center space-x-4">
+              <span className="font-mono text-red-400">
+                {currentProfile ? `profile_${currentProfile.toLowerCase().replace(/\s+/g, '_')}.gl` : 'viewport_canvas_01.gl'}
+              </span>
+              
+              {/* 🛠️ GIZMO INTERACTION MODE SELECTOR */}
+              <div className="flex bg-zinc-950 rounded-md p-0.5 border border-zinc-800 ml-4">
+                <button
+                  onClick={() => setTransformMode('translate')}
+                  className={`px-2.5 py-1 rounded text-[10px] font-bold tracking-wider uppercase transition-all ${transformMode === 'translate' ? 'bg-red-500 text-white shadow' : 'text-zinc-400 hover:text-zinc-200'}`}
+                >
+                  Move Mode
+                </button>
+                <button
+                  onClick={() => setTransformMode('scale')}
+                  className={`px-2.5 py-1 rounded text-[10px] font-bold tracking-wider uppercase transition-all ${transformMode === 'scale' ? 'bg-red-500 text-white shadow' : 'text-zinc-400 hover:text-zinc-200'}`}
+                >
+                  Resize Mode
+                </button>
+              </div>
+            </div>
             <span className="text-zinc-500">THREE.JS RUNTIME RUNNING</span>
           </div>
           
+          {/* VIEWPORT CONTENT HOUSING */}
           <div className="flex-1 relative w-full h-full bg-zinc-950">
+            
+            {/* 🎛️ FLOATING INSPECTOR PANEL (Matches the requested configuration style) */}
+            {activeItem && activeItem.category === 'object' && (
+              <div className="absolute top-4 right-4 z-20 w-60 bg-zinc-900/95 border border-zinc-800 shadow-2xl rounded-lg overflow-hidden backdrop-blur font-mono text-[11px]">
+                <div className="bg-zinc-800 px-3 py-1.5 border-b border-zinc-700 font-semibold text-zinc-300 flex justify-between items-center">
+                  <span>OBJECT INSPECTOR</span>
+                  <span className="text-[9px] bg-zinc-900 text-red-400 px-1.5 py-0.5 rounded capitalize">{activeItem.type}</span>
+                </div>
+                
+                <div className="p-3 space-y-3">
+                  {/* COLOR SATCH */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-zinc-400">objectColor</span>
+                    <div className="flex items-center space-x-1.5">
+                      <span className="text-zinc-500 font-bold uppercase">{activeItem.color}</span>
+                      <div className="w-3 h-3 rounded-sm border border-zinc-700" style={{ backgroundColor: activeItem.color }} />
+                    </div>
+                  </div>
+
+                  <hr className="border-zinc-800" />
+
+                  {/* SCALE X SLIDER */}
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-zinc-400">
+                      <span>scaleX</span>
+                      <span className="text-red-400">{(activeItem.scale?.[0] ?? 1).toFixed(2)}</span>
+                    </div>
+                    <input 
+                      type="range" min="0.2" max="4" step="0.05"
+                      value={activeItem.scale?.[0] ?? 1}
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value);
+                        setSceneItems(prev => prev.map(i => i.id === activeItem.id ? { ...i, scale: [val, i.scale?.[1] ?? 1, i.scale?.[2] ?? 1] } : i));
+                        setActiveItem(prev => prev ? { ...prev, scale: [val, prev.scale?.[1] ?? 1, prev.scale?.[2] ?? 1] } : null);
+                      }}
+                      className="w-full h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-red-500"
+                    />
+                  </div>
+
+                  {/* SCALE Y SLIDER */}
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-zinc-400">
+                      <span>scaleY</span>
+                      <span className="text-red-400">{(activeItem.scale?.[1] ?? 1).toFixed(2)}</span>
+                    </div>
+                    <input 
+                      type="range" min="0.2" max="4" step="0.05"
+                      value={activeItem.scale?.[1] ?? 1}
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value);
+                        setSceneItems(prev => prev.map(i => i.id === activeItem.id ? { ...i, scale: [i.scale?.[0] ?? 1, val, i.scale?.[2] ?? 1] } : i));
+                        setActiveItem(prev => prev ? { ...prev, scale: [prev.scale?.[0] ?? 1, val, prev.scale?.[2] ?? 1] } : null);
+                      }}
+                      className="w-full h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-red-500"
+                    />
+                  </div>
+
+                  {/* SCALE Z SLIDER */}
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-zinc-400">
+                      <span>scaleZ</span>
+                      <span className="text-red-400">{(activeItem.scale?.[2] ?? 1).toFixed(2)}</span>
+                    </div>
+                    <input 
+                      type="range" min="0.2" max="4" step="0.05"
+                      value={activeItem.scale?.[2] ?? 1}
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value);
+                        setSceneItems(prev => prev.map(i => i.id === activeItem.id ? { ...i, scale: [i.scale?.[0] ?? 1, i.scale?.[1] ?? 1, val] } : i));
+                        setActiveItem(prev => prev ? { ...prev, scale: [prev.scale?.[0] ?? 1, prev.scale?.[1] ?? 1, val] } : null);
+                      }}
+                      className="w-full h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-red-500"
+                    />
+                  </div>
+                </div>
+
+                <button 
+                  onClick={() => {
+                    setSceneItems(prev => prev.map(i => ({ ...i, selected: false })));
+                    setActiveItem(null);
+                  }}
+                  className="w-full py-1 bg-zinc-800 border-t border-zinc-700 text-center text-zinc-400 hover:text-zinc-200 hover:bg-zinc-750 transition-colors"
+                >
+                  Close Controls
+                </button>
+              </div>
+            )}
+
             <Canvas camera={{ position: [0, 5, 8] }} shadows>
               <ambientLight intensity={0.3} />
               <pointLight position={[10, 10, 10]} intensity={1.5} />
               <directionalLight position={[5, 8, 5]} intensity={1.5} castShadow />
-              
-              {/* 🛠️ FIXED CONDITIONAL RENDERING LOOP FOR MESHES VS LIGHTING ELEMENTS */}
+            
+              {/* RENDER LOOP FOR OBJECTS AND LIGHTS WITH ADVANCED TRANSFORM CAPABILITIES */}
               {sceneItems.map((item) => {
+                const isSelected = activeItem?.id === item.id;
+
                 if (item.category === 'object') {
+                  const meshContent = (
+                    <>
+                      {item.type === 'cube' && <boxGeometry args={[1.2, 1.2, 1.2]} />}
+                      {item.type === 'circle' && <circleGeometry args={[0.8, 32]} />}
+                      {item.type === 'triangle' && <coneGeometry args={[0.8, 1.4, 3]} />}
+                      <meshStandardMaterial color={item.selected ? '#ef4444' : item.color} roughness={0.4} />
+                    </>
+                  );
+
+                  if (isSelected) {
+                    return (
+                      <TransformControls
+                        key={`transform-${item.id}`}
+                        position={item.position}
+                        mode={transformMode} // 👈 DYNAMICALLY SWITCHES BETWEEN 'translate' AND 'scale'
+                        onDraggingChanged={(e) => {
+                          if (orbitRef.current) orbitRef.current.enabled = !e.value;
+                        }}
+                        onMouseUp={(e) => {
+                          // Captures both position vectors and size metrics when you let go of the mouse
+                          const { x, y, z } = e.target.object.position;
+                          const s = e.target.object.scale;
+                          const newPos = [x, y, z];
+                          const newScale = [s.x, s.y, s.z];
+
+                          setSceneItems(prev => prev.map(i => i.id === item.id ? { ...i, position: newPos, scale: newScale } : i));
+                          setActiveItem(prev => prev && prev.id === item.id ? { ...prev, position: newPos, scale: newScale } : prev);
+                        }}
+                      >
+                        <mesh 
+                          scale={item.scale || [1, 1, 1]} // 👈 TELLS THREEJS TO RESIZE THE OBJECT
+                          castShadow 
+                          receiveShadow 
+                          onPointerDown={(e) => { e.stopPropagation(); handleItemSelect(item); }}
+                        >
+                          {meshContent}
+                        </mesh>
+                      </TransformControls>
+                    );
+                  }
+
                   return (
                     <mesh 
                       key={item.id} 
                       position={item.position}
+                      scale={item.scale || [1, 1, 1]} // 👈 TELLS THREEJS TO RENDER SAVED SIZES
+                      castShadow 
+                      receiveShadow
                       onPointerDown={(e) => {
                         if (e.nativeEvent.button === 2 || e.nativeEvent.button === 0) {
                           e.stopPropagation(); 
@@ -258,13 +416,12 @@ export default function DashboardPage() {
                         }
                       }}
                     >
-                      {item.type === 'cube' && <boxGeometry args={[1.2, 1.2, 1.2]} />}
-                      {item.type === 'circle' && <circleGeometry args={[0.8, 32]} />}
-                      {item.type === 'triangle' && <coneGeometry args={[0.8, 1.4, 3]} />}
-                      <meshStandardMaterial color={item.selected ? '#ef4444' : item.color} roughness={0.4} />
+                      {meshContent}
                     </mesh>
                   );
+                  
                 } else {
+                  // Environmental Lights Rendering Loop
                   return (
                     <mesh 
                       key={item.id} 
@@ -299,7 +456,13 @@ export default function DashboardPage() {
                 sectionColor="#71717a"
                 fadeDistance={20}
               />
-              <OrbitControls makeDefault enableDamping dampingFactor={0.05} />
+              
+              <OrbitControls ref={orbitRef} makeDefault enableDamping dampingFactor={0.05} />
+
+              <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.015, 0]} receiveShadow>
+                <planeGeometry args={[50, 50]} />
+                <shadowMaterial opacity={0.4} />
+              </mesh>
             </Canvas>
           </div>
         </section>
