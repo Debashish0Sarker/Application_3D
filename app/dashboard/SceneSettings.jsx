@@ -170,22 +170,21 @@ export default function SceneSettings({
           <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-2">Import 3D Asset</h3>
           <div className="space-y-2">
             <input 
-              type="text"
-              placeholder="Paste direct .gltf or .glb URL..."
-              value={customModelUrlInput}
-              onChange={(e) => setCustomModelUrlInput(e.target.value)}
-              className="w-full px-3 py-2 bg-zinc-950 text-xs text-zinc-200 border border-zinc-800 rounded-lg focus:outline-none focus:border-zinc-700 font-mono"
-            />
-            <button
-              onClick={() => {
-                if (!customModelUrlInput.trim()) return;
-                spawnObject('custom', customModelUrlInput.trim());
-                setCustomModelUrlInput('');
+              type="file"
+              accept=".gltf,.glb"
+              onChange={(e) => {
+                const file = e.target.files[0];
+                if (file) {
+                  // Safely extracts model data direct from desktop folder memory space
+                  const secureModelBlob = URL.createObjectURL(file);
+                  spawnObject('custom', secureModelBlob);
+                  
+                  // Resets selection entry slot value so you can spam-load the same model if wanted
+                  e.target.value = null;
+                }
               }}
-              className="w-full py-2 text-center text-xs font-bold bg-red-500 hover:bg-red-600 rounded-lg text-white uppercase tracking-wider transition-all"
-            >
-              + Inject Custom Model
-            </button>
+              className="w-full text-xs text-zinc-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-zinc-800 file:text-zinc-200 hover:file:bg-zinc-700 file:cursor-pointer"
+            />
           </div>
         </div>
       </div>
