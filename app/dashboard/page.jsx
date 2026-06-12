@@ -1,9 +1,12 @@
 "use client";
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, Suspense, useMemo } from 'react';
+import * as THREE from 'three';
 import { useRouter } from 'next/navigation';
 import SceneSettings from './SceneSettings'; 
-import { Canvas, useFrame } from '@react-three/fiber';
+import { Canvas, useFrame, useThree, useLoader } from '@react-three/fiber';
 import { OrbitControls, Grid, TransformControls } from '@react-three/drei';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+import { SceneBackground, CustomAssetLoader } from './CanvasExtensions';
 
 export default function DashboardPage() {
   const [user, setUser] = useState(null);
@@ -20,11 +23,17 @@ export default function DashboardPage() {
   const [transformMode, setTransformMode] = useState('translate');
   const orbitRef = useRef(null);
 
+  const [backgroundImageUrl, setBackgroundImageUrl] = useState('');
+  const [bgInputText, setBgInputText] = useState('');
+  const [customModelUrlInput, setCustomModelUrlInput] = useState('');
+  
+
   const spawnObject = (shapeType) => {
     const newObj = {
       id: Math.random().toString(),
       category: 'object',
       type: shapeType,
+      url: remoteUrl,
       position: [(Math.random() - 0.5) * 4, 0.5, (Math.random() - 0.5) * 4], 
       scale: [1, 1, 1],
       color: '#' + Math.floor(Math.random() * 16777215).toString(16), 
@@ -229,10 +238,15 @@ export default function DashboardPage() {
             deleteProfileFromDatabase={deleteProfileFromDatabase}
             setSceneItems={setSceneItems} // ➕ Passed down to enable workspace resetting functionality
             isSaving={isSaving}
+            bgInputText={bgInputText}
+            setBgInputText={setBgInputText}
+            backgroundImageUrl={backgroundImageUrl}
+            setBackgroundImageUrl={setBackgroundImageUrl}
+            customModelUrlInput={customModelUrlInput}
+            setCustomModelUrlInput={setCustomModelUrlInput}
           />
         </div>
 
-        {/* CENTRAL VIEWPORT CONTAINER */}
         {/* CENTRAL VIEWPORT CONTAINER */}
         <section className="lg:col-span-3 bg-zinc-950 border border-zinc-800 rounded-xl flex flex-col overflow-hidden shadow-2xl min-h-[550px] relative">
           
@@ -401,6 +415,7 @@ export default function DashboardPage() {
             )}
 
             <Canvas camera={{ position: [0, 5, 8] }} shadows>
+              <SceneBackground url={backgroundImageUrl} />
               <ambientLight intensity={0.3} />
               <pointLight position={[10, 10, 10]} intensity={1.5} />
               <directionalLight position={[5, 8, 5]} intensity={1.5} castShadow />
@@ -415,7 +430,13 @@ export default function DashboardPage() {
                       {item.type === 'cube' && <boxGeometry args={[1.2, 1.2, 1.2]} />}
                       {item.type === 'circle' && <circleGeometry args={[0.8, 32]} />}
                       {item.type === 'triangle' && <coneGeometry args={[0.8, 1.4, 3]} />}
-                      <meshStandardMaterial color={item.selected ? '#ef4444' : item.color} roughness={0.4} />
+                      {/* 🌐 Remote Model Downloader */}
+                      <CustomAssetLoader item={item} />
+
+                      {/* Render basic material parameters ONLY if it's not a glTF file type */}
+                      {item.type !== 'custom' && (
+                        <meshStandardMaterial color={item.selected ? '#ef4444' : item.color} roughness={0.4} />
+                      )}
                     </>
                   );
 
