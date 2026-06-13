@@ -117,6 +117,8 @@ export default function SceneSettings({
           <button onClick={() => spawnObject('cube')} className="py-2.5 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-lg text-xs font-medium text-zinc-200 active:scale-95 transition-all">Cube</button>
           <button onClick={() => spawnObject('circle')} className="py-2.5 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-lg text-xs font-medium text-zinc-200 active:scale-95 transition-all">Circle</button>
           <button onClick={() => spawnObject('triangle')} className="py-2.5 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-lg text-xs font-medium text-zinc-200 active:scale-95 transition-all">Triangle</button>
+          <button onClick={() => spawnObject('sphere')} className="py-2.5 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-lg text-xs font-medium text-zinc-200 active:scale-95 transition-all">Sphere</button>
+          <button onClick={() => spawnObject('ball')} className="col-span-2 py-2.5 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-lg text-xs font-medium text-zinc-200 active:scale-95 transition-all">Ball</button>
         </div>
       </div>
 

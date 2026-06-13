@@ -41,7 +41,7 @@ export async function POST(request) {
         return NextResponse.json({
             status: "Success",
             message: "Login successful",
-            user: { id: user._id, username: user.username, email: user.email } // Safely passing reference payload back
+            user: { id: user._id, username: user.username, email: user.email }
         }, { status: 200 });
 
     } catch (error) {

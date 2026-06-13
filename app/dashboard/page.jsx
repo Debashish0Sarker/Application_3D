@@ -28,12 +28,12 @@ export default function DashboardPage() {
   const [customModelUrlInput, setCustomModelUrlInput] = useState('');
   
 
-  const spawnObject = (shapeType) => {
+  const spawnObject = (shapeType, url = null) => {
     const newObj = {
       id: Math.random().toString(),
       category: 'object',
       type: shapeType,
-      url: remoteUrl,
+      url: url,
       position: [(Math.random() - 0.5) * 4, 0.5, (Math.random() - 0.5) * 4], 
       scale: [1, 1, 1],
       color: '#' + Math.floor(Math.random() * 16777215).toString(16), 
@@ -202,22 +202,22 @@ export default function DashboardPage() {
       {/* HEADERBAR */}
       <header className="w-full border-b border-zinc-800 bg-zinc-900/50 backdrop-blur px-6 py-4 flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <div className="h-3 w-3 rounded-full bg-red-500 animate-pulse" />
+          
           <h1 className="text-xl font-bold tracking-wider uppercase text-zinc-200">
-            VR Control Center
+            3D Scene Builder
           </h1>
         </div>
         
         <div className="flex items-center space-x-6">
           <span className="text-sm text-zinc-400">
-            Operator: <strong className="text-red-400 font-medium">@{user?.username}</strong>
+            Username: <strong className="text-red-400 font-medium">{user?.username}</strong>
             {currentProfile && <span className="text-zinc-600 ml-2">({currentProfile})</span>}
           </span>
           <button
             onClick={handleLogout}
             className="px-3 py-1.5 text-xs font-semibold bg-zinc-800 hover:bg-red-950 hover:text-red-400 border border-zinc-700 hover:border-red-900 rounded-lg transition-all"
           >
-            Disconnect
+            LogOut
           </button>
         </div>
       </header>
@@ -273,7 +273,6 @@ export default function DashboardPage() {
                 </button>
               </div>
             </div>
-            <span className="text-zinc-500">THREE.JS RUNTIME RUNNING</span>
           </div>
           
           {/* VIEWPORT CONTENT HOUSING */}
@@ -289,7 +288,7 @@ export default function DashboardPage() {
                 
                 <div className="p-3 space-y-3">
                   
-                  {/* 📦 GEOMETRIC SHAPE CONTROLS */}
+                  {/*GEOMETRIC SHAPE CONTROLS */}
                   {activeItem.category === 'object' && (
                     <>
                       <div className="flex items-center justify-between">
@@ -355,7 +354,7 @@ export default function DashboardPage() {
                     </>
                   )}
 
-                  {/* 💡 AMBIENT/DIRECTIONAL LIGHT SOURCE CONTROLS */}
+                  {/*AMBIENT/DIRECTIONAL LIGHT SOURCE CONTROLS */}
                   {activeItem.category === 'light' && (
                     <>
                       {/* CHROMATIC EMISSION FIELD */}
@@ -400,6 +399,19 @@ export default function DashboardPage() {
                       </div>
                     </>
                   )}
+
+                  <div className="pt-2 border-t border-zinc-800/60">
+                    <button
+                      onClick={() => {
+                        //delete the item from the scene and close the inspector
+                        setSceneItems((prev) => prev.filter((item) => item.id !== activeItem.id));
+                        setActiveItem(null);
+                      }}
+                      className="w-full py-1.5 bg-red-950/40 text-red-400 hover:bg-red-900/50 border border-red-900/30 rounded font-semibold tracking-wide text-center transition-colors active:scale-[0.98]"
+                    >
+                      Delete Element
+                    </button>
+                  </div>
                 </div>
 
                 <button 
@@ -421,6 +433,7 @@ export default function DashboardPage() {
               <directionalLight position={[5, 8, 5]} intensity={1.5} castShadow />
             
               {/* RENDER LOOP FOR OBJECTS AND LIGHTS WITH ADVANCED TRANSFORM CAPABILITIES */}
+              <Suspense fallback={null}>
               {sceneItems.map((item) => {
                 const isSelected = activeItem?.id === item.id;
 
@@ -430,7 +443,10 @@ export default function DashboardPage() {
                       {item.type === 'cube' && <boxGeometry args={[1.2, 1.2, 1.2]} />}
                       {item.type === 'circle' && <circleGeometry args={[0.8, 32]} />}
                       {item.type === 'triangle' && <coneGeometry args={[0.8, 1.4, 3]} />}
-                      {/* 🌐 Remote Model Downloader */}
+                      {item.type === 'sphere' && <sphereGeometry args={[0.5, 32, 32]} />}
+                      {item.type === 'ball' && <sphereGeometry args={[0.3, 32, 32]} />}
+                    
+                      {/* Remote Model Downloader */}
                       <CustomAssetLoader item={item} />
 
                       {/* Render basic material parameters ONLY if it's not a glTF file type */}
@@ -445,12 +461,12 @@ export default function DashboardPage() {
                       <TransformControls
                         key={`transform-${item.id}`}
                         position={item.position}
-                        mode={transformMode} // 👈 DYNAMICALLY SWITCHES BETWEEN 'translate' AND 'scale'
+                        mode={transformMode} //DYNAMICALLY SWITCHES BETWEEN 'translate' AND 'scale'
                         onDraggingChanged={(e) => {
                           if (orbitRef.current) orbitRef.current.enabled = !e.value;
                         }}
                         onMouseUp={(e) => {
-                          // Captures both position vectors and size metrics when you let go of the mouse
+                          // Captures both position vectors and size metrics 
                           const { x, y, z } = e.target.object.position;
                           const s = e.target.object.scale;
                           const newPos = [x, y, z];
@@ -461,7 +477,7 @@ export default function DashboardPage() {
                         }}
                       >
                         <mesh 
-                          scale={item.scale || [1, 1, 1]} // 👈 TELLS THREEJS TO RESIZE THE OBJECT
+                          scale={item.scale || [1, 1, 1]} // RESIZE THE OBJECT
                           castShadow 
                           receiveShadow 
                           onPointerDown={(e) => { e.stopPropagation(); handleItemSelect(item); }}
@@ -476,7 +492,7 @@ export default function DashboardPage() {
                     <mesh 
                       key={item.id} 
                       position={item.position}
-                      scale={item.scale || [1, 1, 1]} // 👈 TELLS THREEJS TO RENDER SAVED SIZES
+                      scale={item.scale || [1, 1, 1]} //  RENDER SAVED SIZES
                       castShadow 
                       receiveShadow
                       onPointerDown={(e) => {
@@ -574,6 +590,7 @@ export default function DashboardPage() {
                 <planeGeometry args={[50, 50]} />
                 <shadowMaterial opacity={0.4} />
               </mesh>
+            </Suspense>
             </Canvas>
           </div>
         </section>

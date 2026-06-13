@@ -38,7 +38,7 @@ export default function AuthPage() {
       }
 
       if (isLogin) {
-        setMessage('Login successful! Loading 3D world...');
+        setMessage('Login successful! Entering to 3D Scene Builder...');
         localStorage.setItem('user', JSON.stringify(data.user));
         // Redirect to the dashboard path
         setTimeout(() => router.push('/dashboard'), 1500);
@@ -57,7 +57,7 @@ export default function AuthPage() {
     <div className="flex min-h-screen items-center justify-center bg-zinc-900 text-white font-sans p-4">
       <div className="w-full max-w-md space-y-6 rounded-2xl bg-zinc-800 p-8 shadow-xl border border-zinc-700">
         <h2 className="text-3xl font-bold text-center tracking-tight text-red-500">
-          {isLogin ? 'Sign In to VR App' : 'Create an Account'}
+          {isLogin ? 'Sign In to 3D Scene Builder' : 'Create an Account'}
         </h2>
         
         <form className="space-y-4" onSubmit={handleSubmit}>
